@@ -232,11 +232,11 @@ paths:
                           type: string
                           format: uuid
                           example: a6688fef-bf44-4558-a27e-2b833263f7b2
-                      total_events:
-                        description: Total number of events stored in the database
-                        type: integer
-                        example: 1
-            '404':
-              description: Not Found
-            '503':
-              description: Server Error
+                  total_events:
+                    description: Total number of events stored in the database
+                    type: integer
+                    example: 1
+        '404':
+          description: Not Found
+        '503':
+          description: Server Error
