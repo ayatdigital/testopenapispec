@@ -58,11 +58,6 @@ paths:
 
                         sub_category:
                           type: string
-                          # enum:
-                          #   - Seminar
-                          #   - Workshop
-                          #   - Entertainment
-                          #   - Others
                           example: Seminar
 
                         event_description:
