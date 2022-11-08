@@ -138,12 +138,6 @@ paths:
                           type: string
                           example: sabin@ayatdigital.com
 
-                        facilities:
-                          type: array
-                          items:
-                            type: string
-                          example: [Parking, Food, AC]
-
                         event_image:
                           type: string
                           example: https://www.avpartners.com/wp-content/uploads/2017/08/Seminars-1.jpg
