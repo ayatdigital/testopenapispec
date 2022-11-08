@@ -1,0 +1,151 @@
+description: model containing event information
+properties:
+  id:
+    type: integer
+    example: 1
+
+  event_name:
+    type: string
+    minLength: 10
+    maxLength: 150
+    example: Blockchain Seminar
+
+  event_category:
+    type: string
+    enum:
+      - Education
+      - Health
+      - Miscellaneous
+    example: Education
+
+  sub_category:
+    type: string
+    # enum:
+    #   - Seminar
+    #   - Workshop
+    #   - Entertainment
+    #   - Others
+    example: Seminar
+
+  event_description:
+    description: This entity holds the entire description of a particular event including images and videos in HTML format
+    type: string
+    minLength: 20
+    example: This is a sample description of a particular event
+
+  organizer:
+    type: string
+    example: Ayat Digital
+
+  audience_count_limit:
+    type: integer
+    example: 200
+
+  presenter:
+    type:
+      - string
+      - "null"
+    example: Sabin Bhattarai
+
+  presence_type:
+    description: Physical represents the events that needs physical presence at a particular venue whereas virtual represents online presence
+    type: string
+    enum:
+      - Physical
+      - Virtual
+    example: Physical
+
+  location:
+    type: string
+    example: Ayat Digital Office, Balkhu, Kathmandu
+  
+  coordinates:
+    type: object
+    properties: 
+      latitude:
+        description: latitude of the desired location
+        type: number
+        example: 27.6971548
+      longitude:
+        description: longitude of the desired location
+        type: number
+        example: 85.29563
+
+  meet_url:
+    type: string
+    example: https://teams.live.com/meet/9570154516608
+
+  start_date:
+    description: Holds both start date and start time
+    type: string
+    example: 2022-02-15 10:40:15.383475+00
+
+  end_date:
+    description: Holds both end date and end time
+    type: string
+    example: 2022-02-18 10:40:15.383475+00
+
+  event_reoccurrence:
+    type: string
+    enum:
+      - One Time
+      - Daily
+      - Weekly
+      - Monthly
+      - Yearly
+    example: Weekly
+
+  contact_number:
+    type: string
+    minLength: 7
+    maxLength: 10
+    example: 9841121212
+
+  contact_email:
+    type: string
+    example: sabin@ayatdigital.com
+
+  facilities:
+    type: array
+    items:
+      type: string
+    example: [Parking, Food, AC]
+
+  event_image:
+    type: string
+    example: https://www.avpartners.com/wp-content/uploads/2017/08/Seminars-1.jpg
+
+  event_type:
+    type: string
+    enum:
+      - Public Event
+      - Private Event
+    example: Public Event
+    
+  event_status:
+    description: This will be sent as a response according to the date of event i.e. If the current date is before the event date, event_status should be 'Not Started'. If the current date and time matches the event date and time, event_status should be 'Ongoing', If the current date is past the event date, event_status should be 'Completed'
+    type: string
+    example: Not Started
+
+
+  is_terms_and_condition_approved:
+    type: boolean
+    example: true
+
+  created_at:
+    type: string
+    example: 2022-02-15 10:40:15.383475+00
+
+  updated_at:
+    type: string
+    example: 2022-02-15 10:40:15.383475+00
+
+  created_by:
+    type: string
+    format: uuid
+    example: a6688fef-bf44-4558-a27e-2b833263f7b2
+
+  updated_by:
+    type: string
+    format: uuid
+    example: a6688fef-bf44-4558-a27e-2b833263f7b2
