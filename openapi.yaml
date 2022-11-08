@@ -1,111 +1,1445 @@
-openapi: "3.0.0"
+openapi: 3.1.0
 info:
   version: 1.0.0
-  title: Swagger Petstore
+  title: AyatDigital Open API Spec
+  termsOfService: https://ayatdigital.com/about/privacypolicy/
+  contact:
+    email: dev@ayatdigital.com
+    url: https://www.ayatdigital.com/contact/
   license:
-    name: MIT
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  x-logo:
+    url: https://avatars.githubusercontent.com/u/95576984?v=4
+  description: >
+    # Introduction
+
+    This API definition is intended to to be a good starting point for
+    describing your API in 
+
+    [OpenAPI/Swagger
+    format](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md).
+
+    [Redoc](https://github.com/Redocly/Redoc) documentation engine. So beyond
+    the standard OpenAPI syntax we use a few 
+
+    [vendor
+    extensions](https://github.com/Redocly/Redoc/blob/master/docs/redoc-vendor-extensions.md).
+
+
+    # OpenAPI Specification
+
+    The goal of The OpenAPI Specification is to define a standard,
+    language-agnostic interface to REST APIs which
+
+    allows both humans and computers to discover and understand the capabilities
+    of the service without access to source
+
+    code, documentation, or through network traffic inspection. When properly
+    defined via OpenAPI, a consumer can 
+
+    understand and interact with the remote service with a minimal amount of
+    implementation logic. Similar to what
+
+    interfaces have done for lower-level programming, OpenAPI removes the
+    guesswork in calling the service.
+externalDocs:
+  description: Find out how to create a GitHub repo for your OpenAPI definition.
+  url: https://github.com/Rebilly/generator-openapi-repo
 servers:
-  - url: http://petstore.swagger.io/v1
+  - url: https://dev.ayatdigital.com
+  - url: https://example.com/api/v1
 paths:
-  /pets:
+  /events:
     get:
-      summary: List all pets
-      operationId: listPets
+      operationId: GetAllEvents
       tags:
-        - pets
+        - Event
+      summary: Get all events
+      description: Get all events from the database
       parameters:
-        - name: limit
+        - name: pageNumber
           in: query
-          description: How many items to return at one time (max 100)
-          required: false
+          description: The pages to return events information
           schema:
             type: integer
-            format: int32
+          required: false
+        - name: pageSize
+          in: query
+          description: The number of events to be returned in a page
+          schema:
+            type: integer
+            example: 9
+          required: false
       responses:
         '200':
-          description: A paged array of pets
-          headers:
-            x-next:
-              description: A link to the next page of responses
-              schema:
-                type: string
-          content:
-            application/json:    
-              schema:
-                $ref: "#/components/schemas/Pets"
-        default:
-          description: unexpected error
+          description: Fetched all events successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/getEvent'
+                  total_events:
+                    description: Total number of events stored in the database
+                    type: integer
+                    example: 1
+        '404':
+          description: Not Found
+        '503':
+          description: Server Error
     post:
-      summary: Create a pet
-      operationId: createPets
+      operationId: createEvent
       tags:
-        - pets
+        - Event
+      summary: Create Event
+      description: >-
+        Creates a new event in the database which can only be done by the logged
+        in user
+      security:
+        - basic_auth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              $ref: '#/components/schemas/postEvent'
       responses:
         '201':
-          description: Null response
-        default:
-          description: unexpected error
+          description: Event Successfully Created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-  /pets/{petId}:
+                type: object
+                properties:
+                  Id:
+                    type: integer
+                    example: 1
+        '401':
+          description: Unauthorized
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    example: f8f8f8f8-f8f8-f8f8-f8f8
+                  error_type:
+                    type: string
+                    example: invalid_request
+                  error_codes:
+                    type: array
+                    example:
+                      - Title is required
+        '503':
+          description: Server Error
+  /events/{id}:
     get:
-      summary: Info for a specific pet
-      operationId: showPetById
-      tags:
-        - pets
+      operationId: getEventById
       parameters:
-        - name: petId
+        - name: id
           in: path
+          description: event id
+          schema:
+            type: number
           required: true
-          description: The id of the pet to retrieve
+      tags:
+        - Event
+      summary: View an event
+      description: Obtain information about a single Event with reference to ID
+      responses:
+        '200':
+          description: Successful pull of an Event
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/getEvent'
+        '404':
+          description: Not Found
+        '503':
+          description: Server Error
+    put:
+      operationId: upadateEvent
+      parameters:
+        - name: id
+          in: path
+          description: event id
+          schema:
+            type: number
+          required: true
+      tags:
+        - Event
+      summary: Update an Event
+      description: Update an event if the user is the creator of that particular event
+      security:
+        - basic_auth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              $ref: '#/components/schemas/postEvent'
+      responses:
+        '204':
+          description: Event Successfully Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Id:
+                    type: integer
+                    example: 1
+        '401':
+          description: Unauthorized
+        '404':
+          description: Event Not Found
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    example: f8f8f8f8-f8f8-f8f8-f8f8
+                  error_type:
+                    type: string
+                    example: invalid_request
+                  error_codes:
+                    type: array
+                    example:
+                      - Title is required
+        '503':
+          description: Server Error
+    delete:
+      operationId: deleteEventById
+      parameters:
+        - name: id
+          in: path
+          description: Event Id
+          schema:
+            type: number
+          required: true
+      tags:
+        - Event
+      summary: Delete an Event
+      description: >-
+        Delete a particular Event with reference to it's ID if the event is
+        created by the same logged in user
+      security:
+        - basic_auth: []
+      responses:
+        '200':
+          description: Event deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Event not found
+        '503':
+          description: Server Error
+  /blog:
+    post:
+      operationId: createBlog
+      tags:
+        - Blog
+      summary: Create Blog
+      description: >-
+        Creates a new blog in the database which can only be performed by
+        authorized user
+      security:
+        - basic_auth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              $ref: '#/components/schemas/postBlog'
+      responses:
+        '201':
+          description: Blog created Successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Id:
+                    type: integer
+                    example: 1
+        '401':
+          description: unauthorized
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    example: f8f8f8f8-f8f8-f8f8-f8f8
+                  error_type:
+                    type: string
+                    example: invalid_request
+                  error_codes:
+                    type: array
+                    example:
+                      - Title is required
+        '503':
+          description: Server Error
+  /blog/getList:
+    get:
+      operationId: getAllBlogs
+      tags:
+        - Blog
+      summary: Get All Blogs/News
+      description: Get All Blogs/ News from database
+      parameters:
+        - name: pageNumber
+          in: query
+          description: The pages to return blogs information
+          schema:
+            type: integer
+          required: false
+        - name: pageSize
+          in: query
+          description: The number of blogs to be returned in a page
+          schema:
+            type: integer
+            example: 10
+          required: false
+      responses:
+        '200':
+          description: Fetched all blogs successfully
+          content:
+            application/json:
+              schema:
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/getBlog'
+                  total_posts:
+                    description: Total number of posts stored in the database
+                    type: integer
+                    example: 1
+        '404':
+          description: Not Found
+        '503':
+          description: Server Error
+  /blog/{id}:
+    get:
+      operationId: GetBlogById
+      parameters:
+        - name: id
+          in: path
+          description: blog Id
+          schema:
+            type: number
+          required: true
+      tags:
+        - Blog
+      summary: View a Blog
+      description: Gets the blog by the given id, where Id is an int
+      responses:
+        '200':
+          description: Successful pull of a Blog
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/getBlog'
+        '404':
+          description: Blog Not Found
+        '503':
+          description: Server Error
+    put:
+      operationId: UpdateBlogById
+      parameters:
+        - name: id
+          in: path
+          description: blog id
+          schema:
+            type: number
+          required: true
+      tags:
+        - Blog
+      summary: Update a Blog
+      description: updates the given blog if performed by authorized user
+      security:
+        - basic_auth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              $ref: '#/components/schemas/postBlog'
+      responses:
+        '204':
+          description: Blog Updated Successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Id:
+                    type: number
+                    example: 1
+        '401':
+          description: Unauthorized
+        '404':
+          description: Blog Not Found
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    example: f8f8f8f8-f8f8-f8f8-f8f8
+                  error_type:
+                    type: string
+                    example: invalid_request
+                  error_codes:
+                    type: array
+                    example:
+                      - Title is required
+        '503':
+          description: Server Error
+    delete:
+      operationId: deleteBlogById
+      parameters:
+        - name: id
+          in: path
+          description: Blog Id
+          schema:
+            type: number
+          required: true
+      tags:
+        - Blog
+      summary: Delete a Blog
+      description: Delete the blog by an authorized user
+      security:
+        - basic_auth: []
+      responses:
+        '200':
+          description: Blog Deleted Successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Blog Not Found
+        '503':
+          description: Server Error
+  /blog/getPostsByTag:
+    get:
+      operationId: getPostsByType
+      tags:
+        - Blog
+      summary: Get Posts By Type
+      description: >-
+        Fetchs posts according to the type of the post i.e., News or Blogs. This
+        is used for filtering posts according to its type
+      parameters:
+        - name: type
+          in: query
+          description: type of the post i.e., news or blogs
           schema:
             type: string
       responses:
         '200':
-          description: Expected response to a valid request
+          description: Fetched all posts according to type
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pet"
-        default:
-          description: unexpected error
+                type: array
+                $ref: '#/components/schemas/getBlog'
+        '404':
+          description: Blog Not Found
+        '503':
+          description: Server Error
+  /course:
+    post:
+      operationId: createCourse
+      tags:
+        - Course
+      summary: Create course
+      description: Creates a new course in the database
+      security:
+        - basic_auth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              $ref: '#/components/schemas/postCourse'
+      responses:
+        '201':
+          description: Course Successfully Created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                type: object
+                properties:
+                  Id:
+                    type: integer
+                    example: 1
+        '401':
+          description: Unauthorized
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    example: f8f8f8f8-f8f8-f8f8-f8f8
+                  error_type:
+                    type: string
+                    example: invalid_request
+                  error_codes:
+                    type: array
+                    example:
+                      - Title is required
+        '503':
+          description: Server Error
+  /course/getList:
+    get:
+      operationId: GetAllCourses
+      tags:
+        - Course
+      summary: Get all courses
+      description: Obtain information about all courses from the database
+      parameters:
+        - name: pageNumber
+          in: query
+          description: The pages to return course information
+          schema:
+            type: integer
+          required: false
+        - name: pageSize
+          in: query
+          description: The number of courses to be returned in a page
+          schema:
+            type: integer
+            example: 9
+          required: false
+      responses:
+        '200':
+          description: Get recent courses
+          content:
+            application/json:
+              schema:
+                properties:
+                  courses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/getCourse'
+                  total_courses:
+                    description: Total number of courses stored in the database
+                    type: integer
+                    example: 1
+        '404':
+          description: Not Found
+        '503':
+          description: Server Error
+  /course/{id}:
+    get:
+      operationId: getCourseById
+      parameters:
+        - name: id
+          in: path
+          description: course id
+          schema:
+            type: number
+          required: true
+      tags:
+        - Course
+      summary: View a course
+      description: Obtain information about a single course with reference to ID
+      responses:
+        '200':
+          description: Successful pull of a course
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/getCourse'
+        '404':
+          description: Not Found
+        '503':
+          description: Server Error
+    put:
+      operationId: updateCourseById
+      parameters:
+        - name: id
+          in: path
+          description: Course id
+          schema:
+            type: number
+          required: true
+      tags:
+        - Course
+      summary: Update Course
+      description: updates a particular course if performed by authorized user
+      security:
+        - basic_auth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              $ref: '#/components/schemas/postCourse'
+      responses:
+        '204':
+          description: Course Updated Successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Id:
+                    type: number
+                    example: 1
+        '401':
+          description: Unauthorized
+        '404':
+          description: Course Not Found
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    example: f8f8f8f8-f8f8-f8f8-f8f8
+                  error_type:
+                    type: string
+                    example: invalid_request
+                  error_codes:
+                    type: array
+                    example:
+                      - Title is required
+        '503':
+          description: Server Error
+    delete:
+      operationId: deleteCourseById
+      parameters:
+        - name: id
+          in: path
+          description: Course Id
+          schema:
+            type: number
+          required: true
+      tags:
+        - Course
+      summary: Delete course
+      description: Delete the course if performed by authorized user
+      security:
+        - basic_auth: []
+      responses:
+        '200':
+          description: Course Deleted Successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Course not found
+        '503':
+          description: Server Error
+  /career:
+    post:
+      operationId: createCareer
+      tags:
+        - Career
+      summary: Create Career
+      description: >-
+        Creates a new career in the database which can only be performed by
+        authorized user
+      security:
+        - basic_auth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/postCareer'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+        '401':
+          description: Unauthorized
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    example: f8f8f8f8-f8f8-f8f8-f8f8
+                  error_type:
+                    type: string
+                    example: invalid_request
+                  error_codes:
+                    type: array
+                    example:
+                      - Title is required
+        '503':
+          description: Server Error
+    get:
+      operationId: getAllCareers
+      tags:
+        - Career
+      summary: Get All Careers
+      description: Get all careers listings from the database
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/getCareer'
+        '503':
+          description: Server Error
+  /career/{id}:
+    get:
+      operationId: getCareerById
+      parameters:
+        - name: id
+          in: path
+          description: Career id
+          schema:
+            type: number
+          required: true
+      tags:
+        - Career
+      summary: Get Career By Id
+      description: Obtain information about a single Career with reference to ID
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/getCareer'
+        '404':
+          description: Not Found
+        '503':
+          description: Server Error
+    put:
+      operationId: UpdateCareer
+      parameters:
+        - name: id
+          in: path
+          description: Career id
+          schema:
+            type: number
+          required: true
+      tags:
+        - Career
+      summary: Update Career By Id
+      description: updates the given career if performed by authorized user
+      security:
+        - basic_auth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              $ref: '#/components/schemas/postCareer'
+      responses:
+        '204':
+          description: No Content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+        '401':
+          description: Unauthorized
+        '404':
+          description: Career Not Found
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    example: f8f8f8f8-f8f8-f8f8-f8f8
+                  error_type:
+                    type: string
+                    example: invalid_request
+                  error_codes:
+                    type: array
+                    example:
+                      - Title is required
+        '503':
+          description: Server Error
+    delete:
+      operationId: deleteCareerById
+      parameters:
+        - name: id
+          in: path
+          description: Career Id
+          schema:
+            type: number
+          required: true
+      tags:
+        - Career
+      summary: Delete Career By Id
+      description: Delete the career by an authorized user
+      security:
+        - basic_auth: []
+      responses:
+        '200':
+          description: Success
+        '401':
+          description: Unauthorized
+        '404':
+          description: Career Not Found
+        '503':
+          description: Server Error
 components:
+  securitySchemes:
+    main_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: http://example.com/api/oauth/dialog
+          scopes:
+            read:users: read users info
+            write:users: modify or remove users
+    api_key:
+      type: apiKey
+      in: header
+      name: api_key
+    basic_auth:
+      type: http
+      scheme: basic
   schemas:
-    Pet:
-      type: object
-      required:
-        - id
-        - name
+    getEvent:
+      description: model containing event information
       properties:
         id:
           type: integer
-          format: int64
-        name:
+          example: 1
+        event_name:
           type: string
-        tag:
+          minLength: 10
+          maxLength: 150
+          example: Blockchain Seminar
+        event_category:
           type: string
-    Pets:
-      type: array
-      items:
-        $ref: "#/components/schemas/Pet"
-    Error:
+          enum:
+            - Education
+            - Health
+            - Miscellaneous
+          example: Education
+        sub_category:
+          type: string
+          example: Seminar
+        event_description:
+          description: >-
+            This entity holds the entire description of a particular event
+            including images and videos in HTML format
+          type: string
+          minLength: 20
+          example: This is a sample description of a particular event
+        organizer:
+          type: string
+          example: Ayat Digital
+        audience_count_limit:
+          type: integer
+          example: 200
+        presenter:
+          type:
+            - string
+            - 'null'
+          example: Sabin Bhattarai
+        presence_type:
+          description: >-
+            Physical represents the events that needs physical presence at a
+            particular venue whereas virtual represents online presence
+          type: string
+          enum:
+            - Physical
+            - Virtual
+          example: Physical
+        location:
+          type: string
+          example: Ayat Digital Office, Balkhu, Kathmandu
+        coordinates:
+          type: object
+          properties:
+            latitude:
+              description: latitude of the desired location
+              type: number
+              example: 27.6971548
+            longitude:
+              description: longitude of the desired location
+              type: number
+              example: 85.29563
+        meet_url:
+          type: string
+          example: https://teams.live.com/meet/9570154516608
+        start_date:
+          description: Holds both start date and start time
+          type: string
+          example: '2022-02-15 10:40:15.383475+00'
+        end_date:
+          description: Holds both end date and end time
+          type: string
+          example: '2022-02-18 10:40:15.383475+00'
+        event_reoccurrence:
+          type: string
+          enum:
+            - One Time
+            - Daily
+            - Weekly
+            - Monthly
+            - Yearly
+          example: Weekly
+        contact_number:
+          type: string
+          minLength: 7
+          maxLength: 10
+          example: 9841121212
+        contact_email:
+          type: string
+          example: sabin@ayatdigital.com
+        facilities:
+          type: array
+          items:
+            type: string
+          example:
+            - Parking
+            - Food
+            - AC
+        event_image:
+          type: string
+          example: https://www.avpartners.com/wp-content/uploads/2017/08/Seminars-1.jpg
+        event_type:
+          type: string
+          enum:
+            - Public Event
+            - Private Event
+          example: Public Event
+        event_status:
+          description: >-
+            This will be sent as a response according to the date of event i.e.
+            If the current date is before the event date, event_status should be
+            'Not Started'. If the current date and time matches the event date
+            and time, event_status should be 'Ongoing', If the current date is
+            past the event date, event_status should be 'Completed'
+          type: string
+          enum:
+            - Not Started
+            - Ongoing
+            - Completed
+          example: Not Started
+        is_terms_and_condition_approved:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          example: '2022-02-15 10:40:15.383475+00'
+        updated_at:
+          type: string
+          example: '2022-02-15 10:40:15.383475+00'
+        created_by:
+          type: string
+          format: uuid
+          example: a6688fef-bf44-4558-a27e-2b833263f7b2
+        updated_by:
+          type: string
+          format: uuid
+          example: a6688fef-bf44-4558-a27e-2b833263f7b2
+    postEvent:
+      description: model containing event information for creating an event
+      required:
+        - event_name
+        - event_category
+        - sub_category
+        - event_description
+        - organizer
+        - audience_count_limit
+        - presence_type
+        - start_date
+        - event_reoccurrence
+        - contact_number
+        - contact_email
+        - event_image
+        - facilities
+        - event_type
+        - is_terms_and_condition_approved
+      properties:
+        event_name:
+          type: string
+          minLength: 10
+          maxLength: 150
+          example: Blockchain Seminar
+        event_category:
+          type: string
+          enum:
+            - Education
+            - Health
+            - Miscellaneous
+          example: Education
+        sub_category:
+          type: string
+          example: Seminar
+        event_description:
+          description: >-
+            This entity holds the entire description of a particular event
+            including images and videos in HTML format
+          type: string
+          minLength: 20
+          example: This is a sample description of a particular event
+        organizer:
+          type: string
+          example: Ayat Digital
+        audience_count_limit:
+          type: integer
+          example: 200
+        presenter:
+          type:
+            - string
+            - 'null'
+          example: Sabin Bhattarai
+        presence_type:
+          description: >-
+            Physical represents the events that needs physical presence at a
+            particular venue whereas virtual represents online presence
+          type: string
+          enum:
+            - Physical
+            - Virtual
+          example: Physical
+        location:
+          type: string
+          example: Ayat Digital Office, Balkhu, Kathmandu
+        coordinates:
+          type: object
+          properties:
+            latitude:
+              description: latitude of the desired location
+              type: number
+              example: 27.6971548
+            longitude:
+              description: longitude of the desired location
+              type: number
+              example: 85.29563
+        meet_url:
+          type: string
+          example: https://teams.live.com/meet/9570154516608
+        start_date:
+          description: Holds both start date and start time
+          type: string
+          example: '2022-02-15 10:40:15.383475+00'
+        end_date:
+          description: Holds both end date and end time
+          type: string
+          example: '2022-02-18 10:40:15.383475+00'
+        event_reoccurrence:
+          type: string
+          enum:
+            - One Time
+            - Daily
+            - Weekly
+            - Monthly
+            - Yearly
+          example: Weekly
+        contact_number:
+          type: string
+          minLength: 7
+          maxLength: 10
+          example: 9841121212
+        contact_email:
+          type: string
+          example: sabin@ayatdigital.com
+        facilities:
+          description: Facilities must have atleast one item
+          type: array
+          example:
+            - Parking
+            - Food
+            - AC
+          items:
+            type: string
+        event_image:
+          type: string
+          example: https://www.avpartners.com/wp-content/uploads/2017/08/Seminars-1.jpg
+        event_type:
+          type: string
+          enum:
+            - Public Event
+            - Private Event
+          example: Public Event
+        is_terms_and_condition_approved:
+          type: boolean
+          example: true
+    postBlog:
+      description: model for creating new post
+      required:
+        - title
+        - content
+        - tags
+        - type
+      properties:
+        title:
+          type: string
+          minLength: 5
+          maxLength: 200
+          example: Why AI is changing the World
+        coverImage:
+          type: string
+          maxLength: 2048
+          example: https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg
+        content:
+          type: string
+          minLength: 20
+          example: >-
+            Letraset sheets containing Lorem Ipsum passages, and more recently
+            with desktop publishing software like Aldus PageMaker including
+            versions of Lorem Ipsum.
+        tags:
+          type: array
+          description: Must provide atleast one tag
+          example:
+            - Dotnet
+            - Nextjs
+          items:
+            type: string
+            example: string
+        type:
+          type: string
+          enum:
+            - Blog
+            - News
+          example: Blog
+    getBlog:
+      description: model containing blog information
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          minLength: 5
+          maxLength: 200
+          example: Why AI is changing the World
+        cover_image:
+          type: string
+          maxLength: 2048
+          example: https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg
+        content:
+          type: string
+          minLength: 20
+          example: >-
+            Letraset sheets containing Lorem Ipsum passages, and more recently
+            with desktop publishing software like Aldus PageMaker including
+            versions of Lorem Ipsum.
+        tags:
+          type: array
+          items:
+            type: string
+          description: Must provide atleast one tag
+          example:
+            - Dotnet
+            - Nextjs
+        type:
+          type: string
+          enum:
+            - Blog
+            - News
+          example: Blog
+        created_by:
+          type: string
+          format: uuid
+          example: a6688fef-bf44-4558-a27e-2b833263f7b2
+        created_at:
+          type: string
+          example: '2022-02-15 10:40:15.383475+00'
+        updated_by:
+          type: string
+          format: uuid
+          example: a6688fef-bf44-4558-a27e-2b833263f7b2
+        updated_at:
+          type: string
+          example: '2022-02-15 10:40:15.383475+00'
+    postCourse:
+      description: model for creating new course
+      required:
+        - course_name
+        - course_category
+        - course_description
+        - course_language
+        - course_image
+        - skills_gained
+        - is_terms_and_condition_approved
+      properties:
+        course_name:
+          type: string
+          minLength: 5
+          example: Data Analytics
+        course_category:
+          type: string
+          minLength: 5
+          example: Technology
+        course_description:
+          description: >-
+            This entity holds the entire description of a particular course in
+            HTML format
+          type: string
+          minLength: 20
+          example: This is a sample description of a course
+        course_tutor:
+          type: string
+          example: Sabin Bhattarai
+        course_language:
+          type: string
+          enum:
+            - English
+            - Nepali
+          example: English
+        videos:
+          type: array
+          items:
+            properties:
+              video_url:
+                type: string
+                example: https://www.youtube.com/watch?v=fWE93St-RaQ
+              video_title:
+                type: string
+                example: Lesson 1
+              video_description:
+                type: string
+                example: This is a sample video description
+        course_image:
+          type: string
+          example: https://www.avpartners.com/wp-content/uploads/2017/08/Seminars-1.jpg
+        skills_gained:
+          type: array
+          description: Must provide atleast one skill
+          example:
+            - Data Handling
+            - Visualization
+            - Analytical Skill
+          items:
+            type: string
+            example: string
+        is_terms_and_condition_approved:
+          type: boolean
+          example: true
+    getCourse:
+      description: getting courses from the database
+      properties:
+        id:
+          type: integer
+          example: 1
+        course_name:
+          type: string
+          minLength: 5
+          example: Data Analytics
+        course_category:
+          type: string
+          minLength: 5
+          example: Technology
+        course_description:
+          type: string
+          minLength: 20
+          example: This is a sample description of a course
+        course_tutor:
+          type: string
+          example: Sabin Bhattarai
+        course_language:
+          type: string
+          enum:
+            - English
+            - Nepali
+          example: English
+        videos:
+          type: array
+          items:
+            properties:
+              video_url:
+                type: string
+                example: https://www.youtube.com/watch?v=fWE93St-RaQ
+              video_title:
+                type: string
+                example: Lesson 1
+              video_description:
+                type: string
+                example: This is a sample video description
+        total_videos:
+          type: integer
+          example: 1
+        course_image:
+          type: string
+          example: https://www.avpartners.com/wp-content/uploads/2017/08/Seminars-1.jpg
+        skills_gained:
+          type: array
+          example:
+            - Data Handling
+            - Visualization
+            - Analytical Skill
+          items:
+            type: string
+            example: string
+        is_terms_and_condition_approved:
+          type: boolean
+          example: true
+        CreatedBy:
+          type: string
+          format: uuid
+          example: a6688fef-bf44-4558-a27e-2b833263f7b2
+        CreatedAt:
+          type: string
+          example: '2022-02-15 10:40:15.383475+00'
+        UpdatedBy:
+          type: string
+          format: uuid
+          example: a6688fef-bf44-4558-a27e-2b833263f7b2
+        UpdatedAt:
+          type: string
+          example: '2022-02-15 10:40:15.383475+00'
+    getCareer:
+      description: get all careers listings from the database
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          minLength: 10
+          example: Junior Web Developer
+        description:
+          type: string
+          example: >-
+            Letraset sheets containing Lorem Ipsum passages, and more recently
+            with desktop publishing software like Aldus PageMaker including
+            versions of Lorem Ipsum.
+        tech_stack:
+          type: array
+          example:
+            - Dotnet
+            - Nextjs
+          items:
+            type: string
+            example: string
+        location:
+          type: string
+          example: London
+        job_type:
+          type: string
+          example: Full Time
+        job_category:
+          type: string
+          example: Engineering
+        created_at:
+          type: string
+          example: '2022-02-15 10:40:15.383475+00'
+        experience:
+          type: string
+          enum:
+            - None
+            - 1 Year
+            - 2 Years
+            - 3 Years
+            - 4 Years
+            - 5 Years
+            - More than 5 Years
+          example: 1 Year
+        deadline:
+          type: string
+          example: '2022-02-15 10:40:15.383475+00'
+        is_expired:
+          description: Sends value true if vacancy has passed the deadline
+          type: boolean
+          example: true
+    postCareer:
+      description: model for creating new career
       type: object
       required:
-        - code
-        - message
+        - title
+        - description
+        - location
       properties:
-        code:
-          type: integer
-          format: int32
-        message:
+        title:
           type: string
+          minLength: 10
+          example: Junior Web Developer
+        description:
+          type: string
+          example: >-
+            Letraset sheets containing Lorem Ipsum passages, and more recently
+            with desktop publishing software like Aldus PageMaker including
+            versions of Lorem Ipsum.
+        tech_stack:
+          type: array
+          example:
+            - Dotnet
+            - Nextjs
+          items:
+            type: string
+            example: string
+        location:
+          type: string
+          example: London
+        job_type:
+          type: string
+          example: Full Time
+        job_category:
+          type: string
+          example: Engineering
+        experience:
+          type: string
+          enum:
+            - None
+            - 1 Year
+            - 2 Years
+            - 3 Years
+            - 4 Years
+            - 5 Years
+            - More than 5 Years
+          example: 1 Year
+        deadline:
+          type: string
+          example: '2022-02-15 10:40:15.383475+00'
